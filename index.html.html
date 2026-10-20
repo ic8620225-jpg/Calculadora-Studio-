@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f2eb">
+<title>Calculadora Financeira do Studio</title>
+<style>
+:root{--bg:#f7f2eb;--card:#fffdfa;--ink:#302820;--muted:#81766a;--gold:#b38a48;--line:#e8ddcf}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#f7f2eb,#eee3d4);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);min-height:100vh;padding:22px 16px calc(28px + env(safe-area-inset-bottom))}
+main{max-width:520px;margin:0 auto}
+header{text-align:center;padding:18px 8px 22px}
+.mark{width:52px;height:52px;border:1px solid var(--gold);border-radius:50%;display:grid;place-items:center;margin:0 auto 12px;color:var(--gold);font-family:Georgia,serif;font-size:23px}
+.kicker{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+h1{font-family:Georgia,serif;font-weight:500;font-size:27px;margin:8px 0}
+.sub{font-size:14px;color:var(--muted);margin:0}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 10px 28px #4b35200b;margin-bottom:14px}
+label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px}
+input{font:inherit;color:var(--ink)}
+.amount{width:100%;border:1px solid var(--line);background:#fff;border-radius:13px;padding:15px;font-size:25px;font-weight:650;outline-color:var(--gold)}
+.section-title{font-family:Georgia,serif;font-size:18px;margin:0 0 16px}
+.row{display:grid;grid-template-columns:1fr 105px;gap:12px;align-items:center;margin:16px 0}
+.pct{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;font-size:17px;background:#fff;outline-color:var(--gold)}
+.result{font-size:17px;font-weight:700;text-align:right;overflow-wrap:anywhere}
+.hint{font-size:12px;color:var(--muted);line-height:1.45;margin:14px 0 0}
+.total{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:15px;margin-top:15px;font-size:13px;color:var(--muted)}
+.total strong{color:var(--ink);font-size:16px}
+button{font:inherit;cursor:pointer;border:1px solid var(--gold);border-radius:13px;background:var(--gold);color:white;padding:13px 16px;font-weight:650;width:100%}
+button.secondary{background:transparent;color:var(--ink);border-color:var(--line);margin-top:9px}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:12px}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="mark">IS</div>
+<div class="kicker">Studio Izabelly Santos</div>
+<h1>Calculadora Financeira</h1>
+<p class="sub">Seu dinheiro, organizado com clareza.</p>
+</header>
+<section class="panel">
+<label for="amount">Valor total em reais (R$)</label>
+<input id="amount" class="amount" type="number" inputmode="decimal" min="0" step="0.01" value="300" aria-label="Valor total em reais">
+</section>
+<section class="panel">
+<h2 class="section-title">Divisão por porcentagens</h2>
+<div id="rows"></div>
+<div class="total"><span>Soma das porcentagens</span><strong id="sumPct">110%</strong></div>
+<p class="hint">Cada porcentagem é calculada separadamente sobre o valor total. A soma pode ser maior ou menor que 100%.</p>
+</section>
+<button id="reset">Restaurar exemplo (R$ 300 · 60% · 40% · 10%)</button>
+<button class="secondary" id="add">+ Adicionar porcentagem</button>
+<footer>Calculadora offline · Os valores ficam apenas nesta página.</footer>
+</main>
+<script>
+const amount = document.getElementById('amount');
+const rows = document.getElementById('rows');
+const sumPct = document.getElementById('sumPct');
+let percentages = [60,40,10];
+const money = n => (Number.isFinite(n) ? n : 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+function render(){
+ rows.innerHTML='';
+ percentages.forEach((pct,i)=>{
+   const row=document.createElement('div'); row.className='row';
+   const left=document.createElement('div');
+   const label=document.createElement('label'); label.textContent=`Porcentagem ${i+1}`; label.htmlFor=`pct-${i}`;
+   const input=document.createElement('input'); input.className='pct'; input.type='number'; input.inputMode='decimal'; input.min='0'; input.max='1000'; input.step='1'; input.id=`pct-${i}`; input.value=pct; input.setAttribute('aria-label',`Porcentagem ${i+1}`);
+   input.addEventListener('input',()=>{percentages[i]=Math.max(0,Number(input.value)||0); update();});
+   left.append(label,input);
+   const right=document.createElement('div'); right.style.textAlign='right';
+   const result=document.createElement('div'); result.className='result'; result.id=`result-${i}`; result.textContent=money((Number(amount.value)||0)*pct/100);
+   const percentLabel=document.createElement('div'); percentLabel.style.cssText='font-size:12px;color:var(--muted);margin-top:5px'; percentLabel.id=`label-${i}`; percentLabel.textContent=`${pct}% do total`;
+   right.append(result,percentLabel); row.append(left,right); rows.append(row);
+ });
+ update();
+}
+function update(){
+ const total=Math.max(0,Number(amount.value)||0);
+ let sum=0;
+ percentages.forEach((p,i)=>{sum+=p; const r=document.getElementById(`result-${i}`);const l=document.getElementById(`label-${i}`);if(r)r.textContent=money(total*p/100);if(l)l.textContent=`${p}% do total`;});
+ sumPct.textContent=`${sum.toLocaleString('pt-BR',{maximumFractionDigits:2})}%`;
+}
+amount.addEventListener('input',update);
+document.getElementById('reset').addEventListener('click',()=>{amount.value='300';percentages=[60,40,10];render();});
+document.getElementById('add').addEventListener('click',()=>{if(percentages.length>=12){alert('Você pode adicionar até 12 porcentagens.');return;}percentages.push(0);render();});
+render();
+</script>
+</body>
+</html>
